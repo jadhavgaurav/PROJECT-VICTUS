@@ -1,158 +1,215 @@
-# Project VICTUS - Advanced AI Personal Assistant
+# Project VICTUS: The AI Personal Assistant
 
-Project VICTUS is a voice-enabled, conversational AI personal assistant built with a modern, production-grade technology stack. It is context-aware, capable of performing complex tasks through dynamic tool use, and deeply integrated with both local system and cloud productivity services.
+<p align="center">
+  <strong>An advanced, voice-enabled, conversational AI personal assistant built for seamless productivity and system control.</strong>
+</p>
 
-## Features
-
--   **Voice Interface**: Real-time Speech-to-Text (Faster-Whisper) and Text-to-Speech (Piper).
--   **Advanced Agentic Brain**: Powered by Google Gemini 1.5 Flash and orchestrated with LangGraph.
--   **Persistent Document Q&A**: Upload PDF/DOCX files for the agent to query against, using a persistent FAISS vector store.
--   **Dynamic Tooling**:
-    -   **Web Search**: Real-time internet access via Tavily.
-    -   **System Tools**: Navigate the file system, manage applications, and access system info.
-    -   **Microsoft 365**: Read/send Outlook emails and manage Outlook calendar events.
--   **Persistent Memory**: Full chat history is saved in a SQLite database.
--   **Web Frontend**: A clean, modern interface built with HTML, CSS, and Vanilla JavaScript.
-
-## Tech Stack
-
--   **Backend**: FastAPI
--   **AI Agent**: LangChain + LangGraph + Google Gemini 1.5 Flash
--   **Frontend**: HTML, CSS, Vanilla JavaScript
--   **Voice I/O**: Faster-Whisper (STT), Piper TTS (TTS)
--   **Vector Store**: FAISS
--   **Web Search**: Tavily Search API
--   **M365 Auth**: MSAL (Microsoft Authentication Library)
--   **Dependencies**: Poetry
--   **Deployment**: Docker
+<p align="center">
+  <img src="https://i.imgur.com/8a3g8pX.png" alt="Project VICTUS Screenshot" style="border-radius: 12px; border: 1px solid #444;"/>
+</p>
 
 ---
 
-## 🚀 Step 1: Initial Setup
+## ✨ Core Features
 
-### 1.1. Prerequisites
+Project VICTUS is engineered to be a central hub for your digital life, capable of understanding context, performing complex actions, and integrating deeply with your most-used services.
 
--   [Python 3.10+](https://www.python.org/)
--   [Poetry](https://python-poetry.org/docs/#installation) for dependency management.
--   [Docker](https://www.docker.com/products/docker-desktop/) for containerization.
--   System dependency for Piper TTS:
-    ```bash
-    # On Debian/Ubuntu
-    sudo apt-get update && sudo apt-get install -y espeak-ng
+| Feature                      | Description                                                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 🗣️ **Voice Interface** | Real-time, low-latency Speech-to-Text and Text-to-Speech for a natural, hands-free conversational experience.                            |
+| 🧠 **Advanced Agentic Brain** | Powered by Google's Gemini model and orchestrated with LangChain's AgentExecutor for superior reasoning and dynamic tool selection.      |
+| 📄 **Persistent Document Q&A** | Upload PDF and DOCX files to a persistent FAISS vector store, enabling the agent to answer questions based on your documents.             |
+| 💻 **Intelligent System Tools**| Go beyond basic commands. VICTUS can dynamically find and open any installed application (including Store apps), manage files, and access your clipboard. |
+| 📧 **Full Microsoft 365 Suite**| Securely authenticate to read/send Outlook emails and create/read Outlook calendar events using the Microsoft Graph API.                 |
+| 💾 **Persistent Memory** | A complete chat history is stored in a local SQLite database, ensuring the agent remembers your conversations across sessions.          |
 
-    # On MacOS
-    brew install espeak
-    ```
+---
 
-### 1.2. Clone the Project
+## 🏛️ System Architecture
 
-Create a new directory for your project and save all the provided files into the structure outlined below.
+The project follows a modular, decoupled architecture to ensure maintainability and scalability. The core components interact as follows:
 
-### 1.3. API Keys and Environment Variables
+```mermaid
+graph TD
+    subgraph Frontend
+        A[HTML/CSS/JS] -->|HTTP Request| B(FastAPI Backend)
+    end
 
-You need to get API keys from the following services:
+    subgraph Backend
+        B -->|User Query| C{Agent Executor}
+        C -->|Reasoning| D[Google Gemini]
+        C -->|Tool Selection| E[Tool Suite]
+    end
 
--   **Google AI Studio**: for the `GOOGLE_API_KEY`.
--   **Tavily AI**: for the `TAVILY_API_KEY`.
--   **Microsoft Azure**: This is the most involved.
-    1.  Go to the [Azure Portal](https://portal.azure.com/) and navigate to **Azure Active Directory**.
-    2.  Go to **App registrations** > **New registration**.
-    3.  Name it "ProjectVictus" or similar. Select "Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)".
-    4.  You don't need a Redirect URI for the device code flow.
-    5.  After creation, copy the **Application (client) ID** and **Directory (tenant) ID**. These are your `MS_CLIENT_ID` and `MS_TENANT_ID`.
-    6.  Go to **API permissions** > **Add a permission** > **Microsoft Graph**.
-    7.  Select **Delegated permissions**. Add the following permissions:
-        -   `offline_access`
-        -   `User.Read`
-        -   `Mail.ReadWrite`
-        -   `Mail.Send`
-        -   `Calendars.ReadWrite`
-    8.  Go to **Authentication** in the side panel. Scroll down and enable **Allow public client flows**. Click **Save**.
+    subgraph Data & Services
+        E --> F[System Tools: File I/O, App Control]
+        E --> G[Microsoft Graph API: Email, Calendar]
+        E --> H[RAG: FAISS Vector Store]
+        B <--> I[SQLite Database: Chat History]
+    end
 
-Now, create a file named `.env` in the root of your project and populate it with your keys:
-
-```env
-# .env file
-GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
-TAVILY_API_KEY="YOUR_TAVILY_API_KEY"
-MS_CLIENT_ID="YOUR_AZURE_APP_CLIENT_ID"
-MS_TENANT_ID="YOUR_AZURE_APP_TENANT_ID"
+    style A fill:#34495e,stroke:#fff,stroke-width:2px,color:#fff
+    style B fill:#009688,stroke:#fff,stroke-width:2px,color:#fff
+    style C fill:#8E75B2,stroke:#fff,stroke-width:2px,color:#fff
+    style D fill:#8E75B2,stroke:#fff,stroke-width:2px,color:#fff
+    style E fill:#60A5FA,stroke:#fff,stroke-width:2px,color:#fff
+    style F fill:#2c3e50,stroke:#fff,stroke-width:2px,color:#fff
+    style G fill:#2c3e50,stroke:#fff,stroke-width:2px,color:#fff
+    style H fill:#2c3e50,stroke:#fff,stroke-width:2px,color:#fff
+    style I fill:#2c3e50,stroke:#fff,stroke-width:2px,color:#fff
 ```
 
 ---
 
-## 🎶 Step 2: Voice Model Setup (Piper TTS)
+## 🛠️ Tech Stack
 
-The text-to-speech model requires a voice file.
+This project is built on a modern, high-performance, and scalable technology stack, chosen for its reliability and developer experience.
 
-1.  Create a directory named `models` in your project root.
-2.  Download a voice model from [Piper Voices](https://huggingface.co/rhasspy/piper-voices/tree/main). We recommend starting with a high-quality medium voice, like `en_US-lessac-medium.onnx` and its corresponding `.json` file.
-3.  Place both the `.onnx` and `.onnx.json` files inside the `models` directory.
-4.  Your project should now have a `models/en_US-lessac-medium.onnx` file (or similar).
+| Component         | Technology                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Backend** | ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)       |
+| **AI Agent** | ![LangChain](https://img.shields.io/badge/LangChain-008664?style=for-the-badge) ![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=google&logoColor=white) |
+| **Voice I/O** | ![Python](https://img.shields.io/badge/Faster--Whisper_&_Piper-3776AB?style=for-the-badge&logo=python&logoColor=white) |
+| **Vector Store** | ![Meta](https://img.shields.io/badge/FAISS-314399?style=for-the-badge&logo=meta&logoColor=white)              |
+| **Dependencies** | ![Poetry](https://img.shields.io/badge/Poetry-60A5FA?style=for-the-badge)                                     |
+| **Deployment** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white) |
 
 ---
 
-## 📦 Step 3: Install Dependencies
+## 🚀 Getting Started
 
-Open your terminal in the project root and install all Python dependencies using Poetry.
+Follow these steps to set up and run Project VICTUS on your local machine.
 
+### **1. Prerequisites**
+
+Make sure you have the following installed:
+* [Python 3.10+](https://www.python.org/)
+* [Poetry](https://python-poetry.org/docs/#installation) (for dependency management)
+* [Docker](https://www.docker.com/products/docker-desktop/) (for containerized deployment)
+* **Note**: The advanced system tools (`open_app`, `list_files`) are currently configured and optimized for the **Windows** operating system.
+
+### **2. API Keys & Configuration**
+
+You will need to acquire API keys from the following services:
+
+* **Google AI Studio**: For the `GOOGLE_API_KEY`.
+* **Tavily AI**: For the `TAVILY_API_KEY`.
+* **Microsoft Azure**: This is required for the M365 tools.
+    1.  Navigate to **Azure Active Directory** > **App registrations** > **New registration**.
+    2.  Name it `ProjectVictus`. Select the "multitenant and personal Microsoft accounts" option.
+    3.  Once created, copy the **Application (client) ID** and **Directory (tenant) ID**.
+    4.  Go to **API permissions** > **Add a permission** > **Microsoft Graph** > **Delegated permissions**. Add `User.Read`, `Mail.ReadWrite`, `Mail.Send`, and `Calendars.ReadWrite`.
+    5.  Go to **Authentication** and enable **Allow public client flows**.
+
+### **3. Environment Setup**
+
+1.  Clone this repository or create the project files as provided.
+2.  Create a file named `.env` in the project root and populate it with your keys:
+    ```env
+    # .env
+    GOOGLE_API_KEY="YOUR_GOOGLE_API_KEY"
+    TAVILY_API_KEY="YOUR_TAVILY_API_KEY"
+    MS_CLIENT_ID="YOUR_AZURE_APP_CLIENT_ID"
+    MS_TENANT_ID="YOUR_AZURE_APP_TENANT_ID"
+    ```
+
+### **4. Voice Model**
+
+1.  Create a `models` directory in the project root.
+2.  Download a voice model from [Piper Voices](https://huggingface.co/rhasspy/piper-voices/tree/main). We recommend `en_US-lessac-medium`.
+3.  Place both the `.onnx` and `.onnx.json` files inside the `models` directory.
+
+---
+
+## ▶️ Installation & Running
+
+### **1. Install Dependencies**
+
+Open your terminal in the project root and run:
 ```bash
 poetry install
 ```
 
-This will create a virtual environment and install everything listed in `pyproject.toml`.
+### **2. Run the Application**
 
----
-
-## ▶️ Step 4: Running the Application
-
-There are two ways to run Project VICTUS:
-
-### 4.1. Local Development (with Uvicorn)
-
-This is best for testing and development.
-
+#### **Local Development**
+For testing and development, use the Uvicorn server with hot-reloading:
 ```bash
-poetry run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+poetry run uvicorn main:app --reload
 ```
 
-Open your browser and navigate to `http://localhost:8000`.
-
-### 4.2. Production (with Docker)
-
-This is the recommended way to run the application for stable use.
-
-1.  **Build the Docker image:**
+#### **Production (Docker)**
+For a stable, containerized instance:
+1.  **Build the image:**
     ```bash
     docker build -t project-victus .
     ```
-
-2.  **Run the Docker container:**
+2.  **Run the container:**
     ```bash
-    docker run -d -p 8000:8000 --name victus-container --env-file .env -v $(pwd)/faiss_index:/app/faiss_index -v $(pwd)/uploads:/app/uploads -v $(pwd)/.msal_token_cache.json:/app/.msal_token_cache.json project-victus
+    docker run -d -p 8000:8000 --name victus-container --env-file .env -v $(pwd)/faiss_index:/app/faiss_index -v $(pwd)/uploads:/app/uploads -v $(pwd)/chat_history.db:/app/chat_history.db -v $(pwd)/.msal_token_cache.json:/app/.msal_token_cache.json project-victus
     ```
-    *This command maps the port, mounts the persistent FAISS index, uploads folder, and MSAL token cache to your host machine.*
 
-Open your browser and navigate to `http://localhost:8000`.
+Once the server is running, navigate to `http://localhost:8000` in your browser.
 
 ---
 
-## 📝 How to Use
+## 📝 Usage Guide
 
-1.  **Chat**: Simply type your message and press Enter.
-2.  **Use Tools**:
-    -   "What's the latest news on AI?" (Web Search)
-    -   "List files on my desktop." (System Tool)
-    -   "Open VS Code." (System Tool)
-    -   "Summarize my last 3 emails." (M365 - requires login)
-    -   "Create a calendar event for tomorrow at 10 AM titled 'Project sync'." (M365 - requires login)
-3.  **Microsoft 365 Login**:
-    -   The first time you ask for an email or calendar action, the agent will respond that you need to log in.
-    -   Check the **terminal** where the server is running. It will display a message like: `To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code XXXXXXX to authenticate.`
-    -   Follow the instructions. Once you log in, your token is cached, and you won't need to do this again until it expires.
-4.  **Upload Documents for Q&A**:
-    -   Use the "Upload Document" button to select a `.pdf` or `.docx` file.
-    -   Once uploaded, you can ask questions about its content, e.g., "What does the document say about machine learning?"
-5.  **Voice Interaction**:
-    -   **Input**: Click the microphone icon to start recording. Click it again to stop. Your speech will be transcribed and sent.
-    -   **Output**: Click the speaker icon next to any agent message to have it read aloud.
+* **Text Input**: Type your message and press `Enter` to send.
+* **Voice Input**: Click the microphone icon to start recording; click it again to stop and send.
+* **Voice Output**: Click the speaker icon next to any of VICTUS's messages to hear it read aloud.
+* **Document Upload**: Use the upload button to add a PDF or DOCX file to the agent's knowledge base.
+* **Microsoft 365 Login**: The first time you request an M365 action (e.g., "read my email"), check the **terminal** where the server is running. It will provide a code and a URL (`https://microsoft.com/devicelogin`) to complete the secure, one-time authentication.
+
+---
+
+## ☁️ Deployment
+
+This application is designed for easy deployment to the cloud.
+
+* **Live Application**: `[Link to your deployed AWS App Runner URL]`
+* **Docker Image**: `[Link to your public Docker Hub or ECR repository]`
+
+The recommended target is **AWS App Runner**:
+1.  **Push the Docker Image**: Build the image and push it to a private Amazon ECR repository or a public Docker Hub repository.
+2.  **Create App Runner Service**: Create a new service in AWS App Runner, pointing to your image.
+3.  **Configure**: Set the port to `8000` and add your API keys as environment variables in the App Runner configuration.
+
+App Runner will handle the rest, providing you with a secure, public HTTPS URL for your application.
+
+---
+
+## 📁 Project Structure
+
+<details>
+<summary>Click to view the project file structure</summary>
+
+```
+project_victus/
+├── .env
+├── .gitignore
+├── Dockerfile
+├── README.md
+├── agent.py
+├── auth.py
+├── database.py
+├── main.py
+├── models/
+│   └── en_US-lessac-medium.onnx
+│   └── en_US-lessac-medium.onnx.json
+├── models.py
+├── poetry.lock
+├── pyproject.toml
+├── static/
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+└── tools.py
+```
+</details>
+
+---
+
+## 👨‍💻 Author
+
+This project was architected and developed by **Gaurav Vijay Jadhav**, an AI Engineer specializing in computer vision, NLP, and the end-to-end deployment of production-ready AI systems.
