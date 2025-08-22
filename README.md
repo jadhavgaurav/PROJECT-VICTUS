@@ -168,7 +168,7 @@ Once the server is running, navigate to `http://localhost:8000` in your browser.
 This application is designed for easy deployment to the cloud.
 
 * **Live Application**: `[Link to your deployed AWS App Runner URL]`
-* **Docker Image**: `[Link to your public Docker Hub or ECR repository]`
+* **Docker Image**: `[https://hub.docker.com/r/jadhavgaurav007/project-victus]`
 
 The recommended target is **AWS App Runner**:
 1.  **Push the Docker Image**: Build the image and push it to a private Amazon ECR repository or a public Docker Hub repository.
