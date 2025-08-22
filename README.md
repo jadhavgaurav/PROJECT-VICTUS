@@ -83,7 +83,7 @@ Follow these steps to set up and run Project VICTUS on your local machine.
 ### **1. Prerequisites**
 
 Make sure you have the following installed:
-* [Python 3.10+](https://www.python.org/)
+* [Python 3.11+](https://www.python.org/)
 * [Poetry](https://python-poetry.org/docs/#installation) (for dependency management)
 * [Docker](https://www.docker.com/products/docker-desktop/) (for containerized deployment)
 * **Note**: The advanced system tools (`open_app`, `list_files`) are currently configured and optimized for the **Windows** operating system.

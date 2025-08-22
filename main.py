@@ -61,11 +61,31 @@ class ChatRequest(BaseModel):
     message: str
     session_id: str
 
+# ==============================================================================
+# === NEW HISTORY ENDPOINT ===
+# ==============================================================================
+class HistoryRequest(BaseModel):
+    session_id: str
+
+@app.post("/api/history")
+async def get_history(request: HistoryRequest, db: Session = Depends(get_db)):
+    history = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == request.session_id).order_by(models.ChatMessage.timestamp).all()
+    
+    if not history:
+        # If there's no history, create and return the welcome message
+        welcome_message = {"message": "Hello! I'm VICTUS, your personal AI assistant. How can I help you today?", "sender": "ai"}
+        return {"history": [welcome_message]}
+        
+    # Otherwise, return the existing history
+    history_list = [{"message": msg.message, "sender": msg.sender} for msg in history]
+    return {"history": history_list}
+# ==============================================================================
+
+
 @app.get("/")
 async def read_root():
     return FileResponse('static/index.html')
 
-@app.post("/api/chat")
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest, db: Session = Depends(get_db)):
     rag_enabled = os.path.exists(FAISS_INDEX_PATH) and bool(os.listdir(FAISS_INDEX_PATH))
