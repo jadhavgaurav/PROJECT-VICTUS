@@ -8,7 +8,6 @@ import requests #type:ignore
 from typing import List
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
-import winreg
 import dateparser #type:ignore
 
 # LangChain Imports
@@ -19,6 +18,8 @@ from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
+if platform.system() == "Windows":
+    import winreg # Conditional import for Windows-specific libraries 
 
 # Local Auth Import
 from auth import get_access_token
