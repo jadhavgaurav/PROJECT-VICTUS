@@ -8,12 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const micBtn = document.getElementById('mic-btn');
 
     let sessionId = localStorage.getItem('victus_session_id');
+    let isNewSession = false; // <-- New flag to track a new session
+
     if (!sessionId) {
         sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         localStorage.setItem('victus_session_id', sessionId);
+        isNewSession = true; // <-- Set the flag to true only when a new ID is created
     }
-    
-    // --- Voice Recording Logic (remains the same) ---
+
+    // --- Voice Recording Logic ---
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
@@ -73,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Transcription failed');
             const data = await response.json();
             messageInput.value = data.transcription;
-            // Submit the form with the transcribed text
             chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
         } catch (error) {
             console.error('Error during transcription:', error);
@@ -83,21 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ==============================================================================
-    // === NEW CODE ADDED HERE ===
-    // ==============================================================================
     messageInput.addEventListener('keydown', (event) => {
-        // Check if the Enter key is pressed and the Shift key is NOT pressed
         if (event.key === 'Enter' && !event.shiftKey) {
-            // Prevent the default action (adding a new line)
             event.preventDefault();
-            // Submit the form
             chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
         }
     });
-    // ==============================================================================
 
-    // --- Chat Logic (remains the same) ---
+    // --- Chat Logic ---
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const message = messageInput.value.trim();
@@ -105,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addMessageToChat(message, 'user');
         messageInput.value = '';
-        messageInput.style.height = '50px'; // Reset height
+        messageInput.style.height = '50px';
         loadingIndicator.style.display = 'flex';
 
         try {
@@ -184,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- File Upload Logic (remains the same) ---
+    // --- File Upload Logic ---
     uploadBtn.addEventListener('click', () => fileUpload.click());
 
     fileUpload.addEventListener('change', async () => {
@@ -214,13 +209,21 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessageToChat(`Error: ${error.message}`, 'ai');
         } finally {
             loadingIndicator.style.display = 'none';
-            fileUpload.value = ''; // Reset file input
+            fileUpload.value = '';
         }
     });
 
-    // --- Auto-resize textarea Logic (remains the same) ---
+    // --- Auto-resize textarea Logic ---
     messageInput.addEventListener('input', () => {
         messageInput.style.height = 'auto';
         messageInput.style.height = `${messageInput.scrollHeight}px`;
     });
+
+    // ==============================================================================
+    // === CORRECTED FEATURE: Add a welcome message on new sessions ===
+    // ==============================================================================
+    // Check the flag we set during session ID creation.
+    if (isNewSession) {
+        addMessageToChat("Hello! I'm VICTUS, your personal AI assistant. How can I help you today?", 'ai');
+    }
 });
