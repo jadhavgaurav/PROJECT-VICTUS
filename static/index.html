@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project VICTUS</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Project VICTUS</h1>
+            <div class="header-controls">
+                <input type="file" id="file-upload" accept=".pdf,.docx" style="display: none;">
+                <button id="upload-btn" class="control-btn" title="Upload Document">
+                    <i class="fas fa-upload"></i>
+                </button>
+            </div>
+        </header>
+        <div id="chat-window" class="chat-window">
+            </div>
+        <div id="loading-indicator" class="loading-indicator" style="display: none;">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <form id="chat-form" class="chat-form">
+            <textarea id="message-input" placeholder="Ask VICTUS anything..." required></textarea>
+            <button id="mic-btn" type="button" class="control-btn" title="Start/Stop Recording">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button id="send-btn" type="submit" class="control-btn" title="Send Message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "project-victus"
+version = "1.0.0"
+description = "Advanced AI Personal Assistant"
+authors = ["AI Architect"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.111.0"
+uvicorn = {extras = ["standard"], version = "^0.29.0"}
+langchain = "~0.2.1"
+langgraph = "~0.0.60"
+langchain-google-genai = "~1.0.4"
+python-dotenv = "^1.0.1"
+tavily-python = "^0.3.3"
+faiss-cpu = "^1.8.0"
+langchain-community = "~0.2.1"
+pypdf = "^4.2.0"
+python-docx = "^1.1.2"
+sqlalchemy = "^2.0.30"
+msal = "^1.28.0"
+requests = "^2.32.3"
+pyperclip = "^1.8.2"
+faster-whisper = "^1.0.3"
+piper-tts = "^1.2.0"  # This is the correct, working package and version
+soundfile = "^0.12.1"
+# Forcing a CPU-only version of torch is smaller and avoids potential CUDA issues
+torch = { version = "^2.3.0", source = "cpu" }
+dateparser = "^1.2.2"
+pyautogui = "^0.9.54"
+pygetwindow = "^0.0.9"
+
+[[tool.poetry.source]]
+name = "cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

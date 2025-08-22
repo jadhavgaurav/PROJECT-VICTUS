@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv
+.git
+.gitignore
+chat_history.db
+faiss_index/
+uploads/
+.msal_token_cache.json
