@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://i.imgur.com/8a3g8pX.png" alt="Project VICTUS Screenshot" style="border-radius: 12px; border: 1px solid #444;"/>
+  <img src="images/image.png" alt="Project VICTUS Screenshot" style="border-radius: 12px; border: 1px solid #444;"/>
 </p>
 
 ---
