@@ -67,6 +67,12 @@ class ChatRequest(BaseModel):
 class HistoryRequest(BaseModel):
     session_id: str
 
+@app.get("/healthz")
+async def health_check():
+    """A simple endpoint to confirm the server is running."""
+    return {"status": "ok"}
+
+
 @app.post("/api/history")
 async def get_history(request: HistoryRequest, db: Session = Depends(get_db)):
     history = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == request.session_id).order_by(models.ChatMessage.timestamp).all()
@@ -80,6 +86,7 @@ async def get_history(request: HistoryRequest, db: Session = Depends(get_db)):
     history_list = [{"message": msg.message, "sender": msg.sender} for msg in history]
     return {"history": history_list}
 # ==============================================================================
+
 
 
 @app.get("/")

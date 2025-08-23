@@ -142,7 +142,7 @@ poetry run uvicorn main:app --reload
 For a stable, containerized instance:
 1.  **Build the image:**
     ```bash
-    docker build -t project-victus .
+    docker build -t jadhavgaurav007/project-victus .
     ```
 2.  **Run the container:**
     ```bash
