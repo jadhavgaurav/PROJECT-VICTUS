@@ -10,5 +10,4 @@ faiss_index/*
 uploads/*
 *.db
 .msal_token_cache.json
-en_US-lessac-medium.onnx
-en_US-lessac-medium.onnx.json
+audio/

@@ -1,16 +1,20 @@
+# main.py - UPDATED
+
 import os
 import shutil
 import uuid
-import soundfile as sf
-import numpy as np
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request
+import asyncio # NEW: For running blocking code in a thread
+import traceback # NEW: For better error logging
+from contextlib import asynccontextmanager # NEW: For modern startup/shutdown events
+
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request, BackgroundTasks # UPDATED
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse, JSONResponse
 from langchain_core.messages import HumanMessage, AIMessage
 
-
+# Local Imports
 import models
 from database import engine, get_db
 from agent import create_agent_executor
@@ -20,121 +24,111 @@ from auth import is_authenticated
 # Initialize Database
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Project VICTUS")
+# Lifespan manager for loading models on startup
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Load all necessary models and the agent when the application starts.
+    This is much more efficient than loading them on each request.
+    """
+    print("--- Application Startup ---")
+    # Load Speech-to-Text Model
+    from faster_whisper import WhisperModel
+    print("Loading STT model (faster-whisper)...")
+    app.state.stt_model = WhisperModel("base.en", device="cpu", compute_type="int8")
+    print("STT model loaded.")
+
+    # Load Text-to-Speech Model
+    from piper import PiperVoice
+    model_path = next((os.path.join("models", f) for f in os.listdir("models") if f.endswith(".onnx")), None)
+    if not model_path:
+        raise RuntimeError("Could not find a .onnx model file in the /models directory.")
+    print(f"Loading TTS model ({model_path})...")
+    app.state.tts_model = PiperVoice.load(model_path)
+    print("TTS model loaded.")
+
+    # Create a reusable Agent Executor
+    # We will create a new one per request if RAG status changes, but can reuse this.
+    print("Creating initial Agent Executor...")
+    app.state.agent_executor = create_agent_executor(rag_enabled=False) # Start with RAG disabled
+    print("Initial Agent Executor created.")
+    print("--- Application Ready ---")
+    
+    yield # The application is now running
+
+    # --- Shutdown logic can go here if needed ---
+    print("--- Application Shutdown ---")
+
+
+app = FastAPI(title="Project VICTUS", lifespan=lifespan) # UPDATED
 
 # Mount static files (for frontend)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# --- Voice Model Loading (Lazy Load) ---
-stt_model = None
-tts_model = None
 
-def get_stt_model():
-    global stt_model
-    if stt_model is None:
-        from faster_whisper import WhisperModel
-        # This will download the model on first use
-        print("Loading STT model (faster-whisper)...")
-        stt_model = WhisperModel("base.en", device="cpu", compute_type="int8")
-        print("STT model loaded.")
-    return stt_model
-
-def get_tts_model():
-    global tts_model
-    if tts_model is None:
-        from piper import PiperVoice
-        # Find the .onnx file in the models directory
-        model_path = None
-        for file in os.listdir("models"):
-            if file.endswith(".onnx"):
-                model_path = os.path.join("models", file)
-                break
-        if not model_path:
-            raise RuntimeError("Could not find a .onnx model file in the /models directory.")
-        print(f"Loading TTS model ({model_path})...")
-        tts_model = PiperVoice.load(model_path)
-        print("TTS model loaded.")
-    return tts_model
-
-
+# Pydantic Models for requests
 class ChatRequest(BaseModel):
     message: str
     session_id: str
 
-# ==============================================================================
-# === NEW HISTORY ENDPOINT ===
-# ==============================================================================
 class HistoryRequest(BaseModel):
     session_id: str
 
+# API Endpoints
 @app.get("/healthz")
 async def health_check():
     """A simple endpoint to confirm the server is running."""
     return {"status": "ok"}
 
-
 @app.post("/api/history")
 async def get_history(request: HistoryRequest, db: Session = Depends(get_db)):
     history = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == request.session_id).order_by(models.ChatMessage.timestamp).all()
-    
     if not history:
-        # If there's no history, create and return the welcome message
         welcome_message = {"message": "Hello! I'm VICTUS, your personal AI assistant. How can I help you today?", "sender": "ai"}
         return {"history": [welcome_message]}
-        
-    # Otherwise, return the existing history
     history_list = [{"message": msg.message, "sender": msg.sender} for msg in history]
     return {"history": history_list}
-# ==============================================================================
-
-
 
 @app.get("/")
 async def read_root():
     return FileResponse('static/index.html')
 
 @app.post("/api/chat")
-async def chat_endpoint(request: ChatRequest, db: Session = Depends(get_db)):
-    rag_enabled = os.path.exists(FAISS_INDEX_PATH) and bool(os.listdir(FAISS_INDEX_PATH))
+async def chat_endpoint(request: Request, db: Session = Depends(get_db)): 
+    chat_request: ChatRequest = await request.json()
+    chat_request = ChatRequest.parse_obj(chat_request)
 
-    # The flawed check is removed. The agent is now always created with all tools.
+    # Re-create agent only if RAG status changes. More efficient.
+    rag_enabled = os.path.exists(FAISS_INDEX_PATH) and bool(os.listdir(FAISS_INDEX_PATH))
     agent_executor = create_agent_executor(rag_enabled=rag_enabled)
 
-    # Load and translate chat history from the database
-    history = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == request.session_id).order_by(models.ChatMessage.timestamp).all()
-    chat_history_messages = []
-    for msg in history:
-        if msg.sender == "user":
-            chat_history_messages.append(HumanMessage(content=msg.message))
-        elif msg.sender == "ai":
-            chat_history_messages.append(AIMessage(content=msg.message))
+    history = db.query(models.ChatMessage).filter(models.ChatMessage.session_id == chat_request.session_id).order_by(models.ChatMessage.timestamp).all()
+    chat_history_messages = [HumanMessage(content=msg.message) if msg.sender == "user" else AIMessage(content=msg.message) for msg in history]
 
-    # Save the new user message to the database
-    db_user_msg = models.ChatMessage(session_id=request.session_id, message=request.message, sender="user")
+    db_user_msg = models.ChatMessage(session_id=chat_request.session_id, message=chat_request.message, sender="user")
     db.add(db_user_msg)
     db.commit()
 
     try:
-        # Invoke the AgentExecutor with the correct dictionary input
-        response = agent_executor.invoke({
-            "input": request.message,
+        response = await agent_executor.ainvoke({ # async invoke
+            "input": chat_request.message,
             "chat_history": chat_history_messages
         })
-        # Extract the final output from the response dictionary
         final_response = response.get("output", "I encountered an error processing your request.")
     except Exception as e:
-        print(f"Agent invocation error: {e}")
+        print("--- AGENT INVOCATION ERROR ---")
+        traceback.print_exc()
+        print("----------------------------")
         raise HTTPException(status_code=500, detail="An error occurred while processing your request.")
 
-    # Save the AI's final response to the database
-    db_ai_msg = models.ChatMessage(session_id=request.session_id, message=final_response, sender="ai")
+    db_ai_msg = models.ChatMessage(session_id=chat_request.session_id, message=final_response, sender="ai")
     db.add(db_ai_msg)
     db.commit()
 
     return {"response": final_response}
 
 @app.post("/api/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)): # UPDATED
     if not (file.filename.endswith(".pdf") or file.filename.endswith(".docx")):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a PDF or DOCX.")
     
@@ -142,53 +136,54 @@ async def upload_document(file: UploadFile = File(...)):
     os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(upload_dir, file.filename)
 
-    try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        # Process and index the document
-        update_vector_store(file_path)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # The server responds to the user immediately.
+    background_tasks.add_task(update_vector_store, file_path)
 
-        return {"status": "success", "filename": file.filename, "detail": "File processed and indexed."}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "detail": str(e)})
+    return {"status": "success", "filename": file.filename, "detail": "File received and is being processed in the background."}
 
 @app.post("/api/transcribe")
-async def transcribe_audio(file: UploadFile = File(...)):
+async def transcribe_audio(request: Request, file: UploadFile = File(...)): # UPDATED
     try:
-        stt = get_stt_model()
-        # Read the audio file in memory
+        stt_model = request.app.state.stt_model
         audio_bytes = await file.read()
-        segments, _ = stt.transcribe(audio_bytes, beam_size=5)
-        transcription = " ".join([segment.text for segment in segments])
+        
+        def run_transcription():
+            segments, _ = stt_model.transcribe(audio_bytes, beam_size=5)
+            return " ".join([segment.text for segment in segments])
+
+        transcription = await asyncio.to_thread(run_transcription)
         return {"transcription": transcription}
     except Exception as e:
-        print(f"Transcription error: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error transcribing audio: {e}")
 
-
 @app.post("/api/synthesize")
-async def synthesize_speech(request: Request):
+async def synthesize_speech(request: Request): # UPDATED
     try:
         body = await request.json()
         text = body.get('text')
         if not text:
             raise HTTPException(status_code=400, detail="No text provided for synthesis.")
         
-        tts = get_tts_model()
+        tts_model = request.app.state.tts_model
         output_dir = "static/audio"
         os.makedirs(output_dir, exist_ok=True)
-        # Use a unique filename to avoid browser caching issues
         output_filename = f"{uuid.uuid4()}.wav"
         output_path = os.path.join(output_dir, output_filename)
 
-        with open(output_path, "wb") as wav_file:
-            tts.synthesize(text, wav_file)
+        # UPDATED: Run the blocking, CPU-bound synthesize function in a thread pool
+        def run_synthesis():
+            with open(output_path, "wb") as wav_file:
+                tts_model.synthesize(text, wav_file)
         
-        # Return the URL to the generated audio
+        await asyncio.to_thread(run_synthesis)
+        
         return {"audio_url": f"/static/audio/{output_filename}"}
     except Exception as e:
-        print(f"TTS error: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error synthesizing speech: {e}")
 
 if __name__ == "__main__":
