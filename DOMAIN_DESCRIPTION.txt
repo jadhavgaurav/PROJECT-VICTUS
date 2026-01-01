@@ -1,0 +1,1 @@
+AI-powered personal assistant that helps users manage tasks, documents, emails, and calendar through natural language conversations. Features voice interface, document intelligence, Microsoft 365 integration, and persistent memory for personalized assistance.

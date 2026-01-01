@@ -1,4 +1,4 @@
-# Dockerfile
+# Dockerfile for Project VICTUS
 # Stage 1: Build stage with Poetry
 FROM python:3.11-slim as builder
 
@@ -10,7 +10,7 @@ ENV PATH="$POETRY_HOME/bin:$PATH"
 RUN pip install --no-cache-dir poetry
 
 WORKDIR /app
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml poetry.lock* ./
 
 # Install dependencies into a virtual environment
 RUN poetry config virtualenvs.in-project true
@@ -30,9 +30,9 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy application code and assets
 COPY . .
-RUN mkdir -p /app/static/audio
-RUN mkdir faiss_index
+RUN mkdir -p /app/static/audio /app/uploads /app/faiss_index
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use the new entry point
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

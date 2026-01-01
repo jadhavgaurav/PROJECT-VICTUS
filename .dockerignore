@@ -1,12 +1,99 @@
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
-.venv
-.git
-.gitignore
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation
+docs/_build/
+*.md.bak
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.db-journal
 chat_history.db
-faiss_index/
-uploads/
-.msal_token_cache.json
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Archives
+archive/
+*.zip
+*.tar.gz
+
+# Models (if large, download separately)
+# models/*.onnx
+# models/*.bin
+
+# Node (if any)
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Frontend build artifacts (if any)
+.next/
+dist/
+build/
+
+# Guides (keep only essential)
+guides/FIGMA_MAKE_PROMPT.md
+guides/DESIGN_REFERENCES.md
+
+# Test files
+tests/
+test_*.py
+
+# Development files
+*.dev.*
+dev_*.py
+
+# Backup files
+*.bak
+*.backup

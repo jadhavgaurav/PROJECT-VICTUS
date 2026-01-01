@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: victus
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free  # Free tier - perfect for sharing!
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+        required: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///./chat_history.db
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        value: "*"  # Update with your custom domain after deployment
+      - key: LOG_LEVEL
+        value: INFO
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "60"
+    healthCheckPath: /api/health
+    autoDeploy: true
+    # Free tier sleeps after 15 min - use UptimeRobot to keep awake
+

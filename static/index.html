@@ -2,38 +2,286 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project VICTUS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="VICTUS - Your Advanced AI Personal Assistant">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VICTUS">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>VICTUS - AI Personal Assistant</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512x512.png">
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>Project VICTUS</h1>
-            <div class="header-controls">
-                <input type="file" id="file-upload" accept=".pdf,.docx" style="display: none;">
-                <button id="upload-btn" class="control-btn" title="Upload Document">
-                    <i class="fas fa-upload"></i>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo Section -->
+        <div class="sidebar-header">
+            <div class="sidebar-header-top">
+                <div class="logo-section">
+                    <div class="logo-icon">V</div>
+                    <h1 class="logo-text">VICTUS</h1>
+                </div>
+                <button class="sidebar-close-btn" id="sidebar-close-btn" aria-label="Close menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </button>
             </div>
-        </header>
-        <div id="chat-window" class="chat-window">
-            </div>
-        <div id="loading-indicator" class="loading-indicator" style="display: none;">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+            <button class="new-chat-btn" id="new-chat-btn">
+                <span class="btn-icon">+</span>
+                <span>New Chat</span>
+            </button>
         </div>
-        <form id="chat-form" class="chat-form">
-            <textarea id="message-input" placeholder="Ask VICTUS anything..." required></textarea>
-            <button id="mic-btn" type="button" class="control-btn" title="Start/Stop Recording">
-                <i class="fas fa-microphone"></i>
+
+
+        <!-- Chat History -->
+        <div class="chat-history-section">
+            <div class="history-header">
+                <label class="section-label">Recent</label>
+                <input type="text" class="history-search" id="history-search" placeholder="Search conversations...">
+            </div>
+            <div class="chat-history-list" id="chat-history-list">
+                <!-- Conversations will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-action-btn" id="documents-btn" title="Documents">
+                <span class="action-icon">📄</span>
+                <span class="action-label">Documents</span>
             </button>
-            <button id="send-btn" type="submit" class="control-btn" title="Send Message">
-                <i class="fas fa-paper-plane"></i>
+            <button class="quick-action-btn" id="memory-btn" title="Memory">
+                <span class="action-icon">🧠</span>
+                <span class="action-label">Memory</span>
             </button>
-        </form>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="sidebar-footer">
+            <div class="user-profile" id="user-profile">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <div class="user-info-text">
+                    <div class="user-name" id="user-name">User</div>
+                    <div class="user-email" id="user-email">user@example.com</div>
+                </div>
+            </div>
+            <!-- Profile Menu -->
+            <div class="profile-menu" id="profile-menu">
+                <button class="profile-menu-item" id="settings-menu-btn">
+                    <span class="menu-icon">⚙️</span>
+                    <span>Settings</span>
+                </button>
+                <button class="profile-menu-item" id="theme-toggle-btn">
+                    <span class="menu-icon" id="theme-icon">🌙</span>
+                    <span id="theme-text">Dark Mode</span>
+                </button>
+                <div class="profile-menu-divider"></div>
+                <button class="profile-menu-item logout-menu-item" id="logout-menu-btn">
+                    <span class="menu-icon">🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Main Chat Area -->
+    <main class="main-content">
+        <!-- Mobile Header with Menu Toggle -->
+        <div class="mobile-header">
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12H21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" transform-origin="center"/>
+                    <path d="M3 6H21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" transform-origin="center"/>
+                    <path d="M3 18H21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" transform-origin="center"/>
+                </svg>
+            </button>
+            <h1 class="mobile-header-title">VICTUS</h1>
+            <div class="mobile-header-spacer"></div>
+        </div>
+        <!-- Welcome Screen (shown when no messages) -->
+        <div class="welcome-screen" id="welcome-screen">
+            <div class="welcome-card">
+                <div class="welcome-icon">🤖</div>
+                <h2 class="welcome-title">Welcome to <span class="gradient-text">VICTUS</span></h2>
+                <p class="welcome-subtitle">Your advanced AI personal assistant. How can I help you today?</p>
+                <div class="example-prompts">
+                    <button class="prompt-card" data-prompt="Check the weather in Mumbai">
+                        <span class="prompt-icon">🌤️</span>
+                        <span>Check the weather in Mumbai</span>
+                    </button>
+                    <button class="prompt-card" data-prompt="Read my latest emails">
+                        <span class="prompt-icon">📧</span>
+                        <span>Read my latest emails</span>
+                    </button>
+                    <button class="prompt-card" data-prompt="What's on my calendar today?">
+                        <span class="prompt-icon">📅</span>
+                        <span>What's on my calendar today?</span>
+                    </button>
+                    <button class="prompt-card" data-prompt="Search the web for latest AI news">
+                        <span class="prompt-icon">🔍</span>
+                        <span>Search the web for...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chat-messages"></div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <div class="input-wrapper">
+                <button class="input-action-btn" id="voice-btn" title="Voice Input">
+                    🎤
+                </button>
+                <textarea 
+                    id="message-input" 
+                    placeholder="Message VICTUS..."
+                    rows="1"
+                ></textarea>
+                <!-- Model Selector inside input box at right end -->
+                <div class="model-selector-inline-wrapper">
+                    <div class="model-selector-inline" id="model-selector">
+                        <!-- Desktop: Show text -->
+                        <span class="model-name-inline" id="current-model">GPT-4o</span>
+                        <!-- Mobile: Show icon only -->
+                        <svg class="model-icon-mobile" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                            <rect x="8" y="8" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                            <line x1="8" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <line x1="20" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <line x1="12" y1="8" x2="12" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <line x1="12" y1="20" x2="12" y2="16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="model-chevron-inline">▼</span>
+                    </div>
+                    <div class="model-dropdown-inline" id="model-dropdown">
+                        <div class="model-option" data-model="gpt-4o">
+                            <div class="model-option-name">GPT-4o</div>
+                            <div class="model-option-desc">Most capable</div>
+                        </div>
+                        <div class="model-option" data-model="gpt-4o-mini">
+                            <div class="model-option-name">GPT-4o-mini</div>
+                            <div class="model-option-desc">Fast & efficient</div>
+                        </div>
+                        <div class="model-option" data-model="gpt-4-turbo">
+                            <div class="model-option-name">GPT-4-turbo</div>
+                            <div class="model-option-desc">Balanced</div>
+                        </div>
+                        <div class="model-option" data-model="gpt-4">
+                            <div class="model-option-name">GPT-4</div>
+                            <div class="model-option-desc">High quality</div>
+                        </div>
+                        <div class="model-option" data-model="gpt-3.5-turbo">
+                            <div class="model-option-name">GPT-3.5-turbo</div>
+                            <div class="model-option-desc">Fastest</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="input-action-btn" id="upload-btn" title="Upload Document">
+                    📎
+                </button>
+                <button class="send-btn" id="send-btn" title="Send">
+                    <svg class="send-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <input type="file" id="file-input" accept=".pdf,.docx" style="display: none;">
+            <input type="file" id="audio-input" accept="audio/*" style="display: none;">
+        </div>
+    </main>
+
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settings-overlay">
+        <div class="settings-panel" id="settings-panel">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button class="settings-close" id="settings-close">✕</button>
+            </div>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Profile</h3>
+                    <div class="settings-item">
+                        <label>Username</label>
+                        <input type="text" id="settings-username" placeholder="Your username">
+                    </div>
+                    <div class="settings-item">
+                        <label>Email</label>
+                        <input type="email" id="settings-email" readonly>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3 class="settings-section-title">System Context</h3>
+                    <div class="settings-item">
+                        <textarea id="settings-context" placeholder="Add custom context that will be included in every conversation..." maxlength="2000"></textarea>
+                        <p class="settings-hint">This context will be included in all conversations to personalize your experience.</p>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Preferences</h3>
+                    <div class="settings-item">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="settings-voice-output">
+                            <span>Voice Output</span>
+                        </label>
+                    </div>
+                    <div class="settings-item">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="settings-auto-scroll" checked>
+                            <span>Auto-scroll</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <button class="settings-save-btn" id="settings-save-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Save Settings</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents Panel -->
+    <div class="panel-overlay" id="documents-overlay">
+        <div class="panel" id="documents-panel">
+            <div class="panel-header">
+                <h2>Documents</h2>
+                <button class="panel-close" data-panel="documents">✕</button>
+            </div>
+            <div class="panel-content" id="documents-content">
+                <!-- Documents will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Panel -->
+    <div class="panel-overlay" id="memory-overlay">
+        <div class="panel" id="memory-panel">
+            <div class="panel-header">
+                <h2>Memory / Facts</h2>
+                <button class="panel-close" data-panel="memory">✕</button>
+            </div>
+            <div class="panel-content" id="memory-content">
+                <!-- Facts will be loaded here -->
+            </div>
+        </div>
     </div>
 
     <script src="/static/script.js"></script>
