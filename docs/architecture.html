@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECT-VICTUS System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            fontFamily: 'Inter, sans-serif'
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #0f1117;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #38bdf8;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 1rem;
+        }
+
+        h2 {
+            color: #94a3b8;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .diagram-container {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            overflow-x: auto;
+        }
+
+        .description {
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        code {
+            background: #334155;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>PROJECT-VICTUS System Architecture</h1>
+        <p class="description">
+            Comprehensive visualization of the detailed system architecture, database schema, and core workflows for the
+            VICTUS AI Agent platform.
+        </p>
+
+        <!-- System Architecture -->
+        <h2>1. High-Level System Architecture</h2>
+        <p class="description">
+            Overview of the full stack architecture including Frontend, Backend, Database layer, and External
+            Integrations.
+        </p>
+        <div class="diagram-container">
+            <div class="mermaid">
+                graph TB
+                subgraph Frontend ["React Frontend"]
+                UI["UI Components"]
+                State["Agent Store (Zustand)"]
+                API_Client["API Client (Axios)"]
+                Auth_Ctx["Auth Context"]
+                end
+
+                subgraph Backend ["FastAPI Backend"]
+                API["API Router"]
+                Auth_Service["Auth Service"]
+
+                subgraph Agent_Core ["Agent Core"]
+                Orchestrator["Agent Orchestrator"]
+                Planner["Planner Module"]
+                Tools["Tool Registry"]
+                Policy["Policy Engine"]
+                end
+
+                subgraph Services ["Services"]
+                RAG["RAG Service"]
+                Memory["Memory/Facts"]
+                Tracer["Trace Logger"]
+                end
+                end
+
+                subgraph Database ["SQLite (Dev) / PostgreSQL (Prod)"]
+                Users
+                Conversations
+                Vectors[("Vector Store/FAISS")]
+                end
+
+                subgraph External ["External APIs"]
+                LLM["LLM Provider (OpenAI/Anthropic)"]
+                M365["Microsoft Graph API"]
+                Google["Google APIs"]
+                Search["Tavily Search"]
+                end
+
+                UI --> State
+                State --> API_Client
+                Auth_Ctx --> API_Client
+                API_Client -- "HTTP/SSE" --> API
+
+                API --> Auth_Service
+                API --> Agent_Core
+
+                Agent_Core --> Services
+
+                Services --> Database
+                Auth_Service --> Database
+
+                Orchestrator --> LLM
+                Tools --> M365
+                Tools --> Google
+                Tools --> Search
+            </div>
+        </div>
+
+        <!-- Database Schema -->
+        <h2>2. Database Schema (ERD)</h2>
+        <p class="description">
+            Entity Relationship Diagram showing the data models for Users, Conversations, Tracing, and Safety systems.
+        </p>
+        <div class="diagram-container">
+            <div class="mermaid">
+                erDiagram
+                Users ||--o{ UserSession : has
+                Users ||--o{ OAuthAccount : links
+                Users ||--o{ Conversation : owns
+                Users ||--o{ Trace : initiates
+                Users ||--o{ UserFact : stores
+                Users ||--o{ PendingAction : triggers
+
+                Conversation ||--o{ Message : contains
+                Conversation ||--|| ConversationMemory : has
+                Conversation ||--o{ Trace : generates
+
+                Trace ||--o{ TraceStep : consists_of
+
+                Users {
+                int id PK
+                string email
+                string username
+                string hashed_password
+                string provider
+                jsonb preferences
+                }
+
+                Conversation {
+                uuid id PK
+                int user_id FK
+                string title
+                boolean pinned
+                boolean archived
+                }
+
+                Message {
+                uuid id PK
+                uuid conversation_id FK
+                string role
+                text content
+                jsonb metadata
+                }
+
+                Trace {
+                uuid id PK
+                int user_id FK
+                uuid conversation_id FK
+                string input_text
+                }
+
+                TraceStep {
+                int id PK
+                uuid trace_id FK
+                string tool_name
+                string decision
+                int duration_ms
+                }
+
+                PendingAction {
+                uuid id PK
+                int user_id FK
+                string tool_name
+                string risk_level
+                string status
+                }
+
+                UserFact {
+                int id PK
+                int user_id FK
+                string key
+                string value
+                }
+            </div>
+        </div>
+
+        <!-- Agent Workflow -->
+        <h2>3. Agent Execution Workflow</h2>
+        <p class="description">
+            The sequential logic flow of the AI agent from receiving a user prompt to delivering a response.
+        </p>
+        <div class="diagram-container">
+            <div class="mermaid">
+                sequenceDiagram
+                participant User
+                participant API
+                participant Agent
+                participant Planner
+                participant Policy
+                participant Tool
+                participant LLM
+
+                User->>API: Send Message
+                API->>Agent: Invoke Agent
+                Agent->>LLM: Get Intent/Plan
+                LLM-->>Agent: Propose Plan/Tool Call
+
+                Loop Execution Loop
+                Agent->>Planner: Validate Step
+
+                alt Tool Call
+                Agent->>Policy: Check Permission (Risk Level)
+
+                alt Approved
+                Policy-->>Agent: Allow
+                Agent->>Tool: Execute Tool
+                Tool-->>Agent: Result
+                else Needs Approval
+                Policy-->>Agent: Halt (Pending Action)
+                Agent-->>API: Request Approval
+                API-->>User: Show Approval UI
+                User->>API: Approve
+                API->>Agent: Resume
+                Agent->>Tool: Execute Tool
+                Tool-->>Agent: Result
+                else Denied
+                Policy-->>Agent: Deny
+                Agent->>Agent: Handle Rejection
+                end
+                end
+
+                Agent->>LLM: Send Tool Output
+                LLM-->>Agent: Next Model Response
+                end
+
+                Agent-->>API: Final Response Stream
+                API-->>User: Display Message
+            </div>
+        </div>
+
+        <!-- Auth Flow -->
+        <h2>4. Authentication & Security Flow</h2>
+        <p class="description">
+            Flows for Local Login, OAuth (Google/Microsoft), and Change Password.
+        </p>
+        <div class="diagram-container">
+            <div class="mermaid">
+                flowchart LR
+                subgraph Client
+                Login["Login Page"]
+                OauthBtn["OAuth Button"]
+                end
+
+                subgraph API
+                AuthRoutes["/api/auth"]
+                SessionMgr["Session Manager"]
+                end
+
+                subgraph DB
+                UserTable[("Users")]
+                SessionTable[("Sessions")]
+                end
+
+                Login -- Creds --> AuthRoutes
+                AuthRoutes -- Verify --> UserTable
+                AuthRoutes -- Create --> SessionMgr
+                SessionMgr -- Store --> SessionTable
+                SessionMgr -- Set Cookie --> Client
+
+                OauthBtn -- Redirect --> Provider["OAuth Provider"]
+                Provider -- Callback Code --> AuthRoutes
+                AuthRoutes -- Exchange Token --> Provider
+                AuthRoutes -- Get User Info --> Provider
+                AuthRoutes -- Find/Create --> UserTable
+                AuthRoutes -- Create Session --> SessionMgr
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>
